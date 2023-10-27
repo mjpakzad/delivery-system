@@ -57,12 +57,28 @@ class BaseRepository implements BaseRepositoryInterface
     }
 
     /**
+     * @param Model $model
+     * @param array $parameters
+     * @return Model
+     */
+    public
+    function update(Model $model, array $parameters): Model
+    {
+        $model->update($parameters);
+
+        return $model->refresh();
+    }
+
+    /**
      * @param Builder $models
      * @param array $queries
      * @return Builder
      */
     public function applyQuery(Builder $models, array $queries = []): Builder
     {
+        foreach ($queries as $column => $value) {
+            $models->where($column, $value);
+        }
         return $models;
     }
 }

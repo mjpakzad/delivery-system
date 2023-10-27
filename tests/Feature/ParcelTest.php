@@ -30,7 +30,7 @@ class ParcelTest extends TestCase
                 'uuid'
             ],
         ]);
-        $response->status(201);
+        $response->assertCreated();
     }
 
     /** @test */
@@ -143,5 +143,93 @@ class ParcelTest extends TestCase
             'destination_latitude' => fake()->latitude(),
             'destination_longitude' => fake()->longitude(),
         ];
+    }
+
+    /** @test */
+    public function it_shows_pending_parcels()
+    {
+        $parcel = Parcel::factory()->create();
+        $courier = Courier::factory()->create();
+        $tokenService = resolve(TokenServiceInterface::class);
+        $token = $tokenService->generateCourierToken($courier);
+        $response = $this->withHeaders(['Authorization' => 'Bearer ' . $token])
+            ->getJson(route('v1.parcels.pending'));
+        $response->assertJsonStructure([
+            'data'  => [
+                '*' => [
+                    'uuid',
+                    'origin_name',
+                    'origin_mobile',
+                    'origin_address',
+                    'origin_latitude',
+                    'origin_longitude',
+                    'destination_name',
+                    'destination_mobile',
+                    'destination_address',
+                    'destination_latitude',
+                    'destination_longitude',
+                    'status',
+                ]
+            ],
+        ]);
+        $response->assertOk();
+    }
+
+    /** @test */
+    public function it_shows_couriers_assigned_parcels()
+    {
+        $courier = Courier::factory()->create();
+        $parcel = Parcel::factory()->create(['courier_id' => $courier->id]);
+        $tokenService = resolve(TokenServiceInterface::class);
+        $token = $tokenService->generateCourierToken($courier);
+        $response = $this->withHeaders(['Authorization' => 'Bearer ' . $token])
+            ->getJson(route('v1.parcels.my'));
+        $response->assertJsonStructure([
+            'data'  => [
+                '*' => [
+                    'uuid',
+                    'origin_name',
+                    'origin_mobile',
+                    'origin_address',
+                    'origin_latitude',
+                    'origin_longitude',
+                    'destination_name',
+                    'destination_mobile',
+                    'destination_address',
+                    'destination_latitude',
+                    'destination_longitude',
+                    'status',
+                ]
+            ],
+        ]);
+        $response->assertJsonFragment(['uuid' => $parcel->uuid]);
+        $response->assertOk();
+        $this->assertDatabaseHas('parcels', ['uuid' => $parcel->uuid, 'courier_id' => $courier->id]);
+    }
+
+    /** @test */
+    public function id_can_assign_parcel_to_courier(): void
+    {
+        $courier = Courier::factory()->create();
+        $parcel = Parcel::factory()->create(['status' => ParcelStatus::PENDING->value, 'courier_id' => null]);
+        $tokenService = resolve(TokenServiceInterface::class);
+        $token = $tokenService->generateCourierToken($courier);
+        $response = $this->withHeaders(['Authorization' => 'Bearer ' . $token])
+            ->patchJson(route('v1.parcels.assign', $parcel->uuid));
+        $this->assertDatabaseHas('parcels', ['uuid' => $parcel->uuid, 'status' => ParcelStatus::ASSIGNED->value]);
+        $response->assertOk();
+    }
+
+    /** @test */
+    public function id_cant_reassign_parcel(): void
+    {
+        $courier = Courier::factory()->create();
+        $parcel = Parcel::factory()->create(['status' => ParcelStatus::ASSIGNED->value]);
+        $tokenService = resolve(TokenServiceInterface::class);
+        $token = $tokenService->generateCourierToken($courier);
+        $response = $this->withHeaders(['Authorization' => 'Bearer ' . $token])
+            ->patchJson(route('v1.parcels.assign', $parcel->uuid));
+        $response->assertJsonFragment(['message' => 'The parcel is already assigned.']);
+        $response->assertForbidden();
     }
 }

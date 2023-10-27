@@ -62,4 +62,14 @@ class Parcel extends Model
     {
         return $query->whereStatus(ParcelStatus::PENDING);
     }
+
+    public function scopeAssigned($query)
+    {
+        return $query->whereNotNull('courier_id');
+    }
+
+    public function scopeUnassigned($query)
+    {
+        return $query->whereNull('courier_id');
+    }
 }

@@ -4,12 +4,15 @@ namespace App\Services;
 
 use App\DTOs\ParcelDTO;
 use App\Enums\ParcelStatus;
+use App\Exceptions\ParcelIsAlreadyAssignedException;
 use App\Exceptions\ParcelIsAlreadyCanceledException;
-use App\Exceptions\ParcelISNotBelongsToYou;
+use App\Exceptions\ParcelISNotBelongsToYouException;
 use App\Exceptions\ParcelIsNotCancelableException;
 use App\Models\Parcel;
 use App\Repositories\Contracts\ParcelRepositoryInterface;
 use App\Services\Contracts\ParcelServiceInterface;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Throwable;
 
 class ParcelService implements ParcelServiceInterface
@@ -59,7 +62,34 @@ class ParcelService implements ParcelServiceInterface
     {
         throw_if($this->parcelRepository->isCancelled($parcel), ParcelIsAlreadyCanceledException::class);
         throw_unless($this->parcelRepository->isCancelable($parcel), ParcelIsNotCancelableException::class);
-        throw_unless($parcel->business_id == auth()->id(), ParcelISNotBelongsToYou::class);
+        throw_unless($parcel->business_id == auth()->id(), ParcelISNotBelongsToYouException::class);
         return $this->parcelRepository->cancel($parcel);
+    }
+
+    /**
+     * @return LengthAwarePaginator|Collection
+     */
+    public function pendingParcels(): LengthAwarePaginator|Collection
+    {
+        return $this->parcelRepository->pending();
+    }
+
+    /**
+     * @return LengthAwarePaginator|Collection
+     */
+    public function myParcels(): LengthAwarePaginator|Collection
+    {
+        return $this->parcelRepository->list(['courier_id' => auth()->id()]);
+    }
+
+    /**
+     * @param $parcel
+     * @return Parcel
+     * @throws Throwable
+     */
+    public function assignParcel($parcel): Parcel
+    {
+        throw_if($this->parcelRepository->isAssigned($parcel), ParcelIsAlreadyAssignedException::class);
+        return $this->parcelRepository->assignToMe($parcel);
     }
 }

@@ -29,6 +29,13 @@ interface BaseRepositoryInterface
     public function find(int $id): Model;
 
     /**
+     * @param Model $model
+     * @param array $parameters
+     * @return Model
+     */
+    public function update(Model $model, array $parameters): Model;
+
+    /**
      * @param Builder $models
      * @param array $queries
      * @return Builder
