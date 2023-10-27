@@ -36,3 +36,9 @@ DB_PASSWORD=
 
 #### Generate App key
 `docker exec -it delivery-system-app php artisan key:generate`
+
+#### Run migrations and seed the table
+`docker exec -it delivery-system-app php artisan migrate --seed`
+
+#### Test the application
+`docker exec -it delivery-system-app php artisan test`
