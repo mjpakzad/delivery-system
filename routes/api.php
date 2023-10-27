@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\API\V1\ParcelController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -14,6 +15,9 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+Route::prefix('v1')->name('v1.')->middleware('auth:sanctum')->group(function () {
+    Route::prefix('parcels')->name('parcels.')->controller(ParcelController::class)->group(function () {
+        Route::post('/', 'store')->name('store')->middleware('ability:parcels-create');
+        Route::patch('{parcel}/cancel', 'cancel')->name('cancel')->middleware('ability:parcels-cancel');
+    });
 });

@@ -21,6 +21,13 @@ class ParcelTest extends TestCase
     }
 
     /** @test */
+    public function it_uses_the_correct_route_key_name()
+    {
+        $parcel = new Parcel();
+        $this->assertEquals('uuid', $parcel->getRouteKeyName());
+    }
+
+    /** @test */
     public function it_belongs_to_a_courier()
     {
         $courier1 = Courier::factory()->create();

@@ -29,16 +29,22 @@ DB_PASSWORD=
 ```
 
 ### Build containers
-`docker compose up -d`
+```bash
+docker compose up -d
+```
 
 #### Install vendors
-`docker exec -it delivery-system-app composer install`
+```bash
+docker exec -it delivery-system-app composer install
+```
 
-#### Generate App key
-`docker exec -it delivery-system-app php artisan key:generate`
-
-#### Run migrations and seed the table
-`docker exec -it delivery-system-app php artisan migrate --seed`
+#### preparing laravel
+This command will generate APP_KEY, run migrations, seed the tables and generate tokens.
+```bash
+docker exec -it delivery-system-app php artisan delivery:install
+```
 
 #### Test the application
-`docker exec -it delivery-system-app php artisan test`
+```bash
+docker exec -it delivery-system-app php artisan test
+```

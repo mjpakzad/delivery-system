@@ -37,6 +37,11 @@ class Parcel extends Model
         'status' => ParcelStatus::class,
     ];
 
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
+
     /**
      * @return BelongsTo
      */
