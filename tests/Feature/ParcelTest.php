@@ -232,4 +232,85 @@ class ParcelTest extends TestCase
         $response->assertJsonFragment(['message' => 'The parcel is already assigned.']);
         $response->assertForbidden();
     }
+
+    /** @test */
+    public function id_can_change_parcel_status_to_at_vendor(): void
+    {
+        $courier = Courier::factory()->create();
+        $parcel = Parcel::factory()->create(['status' => ParcelStatus::ASSIGNED->value, 'courier_id' => $courier->id]);
+        $tokenService = resolve(TokenServiceInterface::class);
+        $token = $tokenService->generateCourierToken($courier);
+        $response = $this->withHeaders(['Authorization' => 'Bearer ' . $token])
+            ->patchJson(route('v1.parcels.at-vendor', $parcel->uuid));
+        $this->assertDatabaseHas('parcels', ['uuid' => $parcel->uuid, 'status' => ParcelStatus::AT_VENDOR->value]);
+        $response->assertOk();
+    }
+
+    /** @test */
+    public function id_can_change_parcel_status_to_picked(): void
+    {
+        $courier = Courier::factory()->create();
+        $parcel = Parcel::factory()->create(['status' => ParcelStatus::AT_VENDOR->value, 'courier_id' => $courier->id]);
+        $tokenService = resolve(TokenServiceInterface::class);
+        $token = $tokenService->generateCourierToken($courier);
+        $response = $this->withHeaders(['Authorization' => 'Bearer ' . $token])
+            ->patchJson(route('v1.parcels.picked', $parcel->uuid));
+        $this->assertDatabaseHas('parcels', ['uuid' => $parcel->uuid, 'status' => ParcelStatus::PICKED->value]);
+        $response->assertOk();
+    }
+
+    /** @test */
+    public function id_can_change_parcel_status_to_delivered(): void
+    {
+        $courier = Courier::factory()->create();
+        $parcel = Parcel::factory()->create(['status' => ParcelStatus::PICKED->value, 'courier_id' => $courier->id]);
+        $tokenService = resolve(TokenServiceInterface::class);
+        $token = $tokenService->generateCourierToken($courier);
+        $response = $this->withHeaders(['Authorization' => 'Bearer ' . $token])
+            ->patchJson(route('v1.parcels.delivered', $parcel->uuid));
+        $this->assertDatabaseHas('parcels', ['uuid' => $parcel->uuid, 'status' => ParcelStatus::DELIVERED->value]);
+        $response->assertOk();
+    }
+
+    /** @test */
+    public function id_cant_change_someone_else_parcel_status_to_at_vendor(): void
+    {
+        $courier1 = Courier::factory()->create();
+        $courier2 = Courier::factory()->create();
+        $parcel = Parcel::factory()->create(['status' => ParcelStatus::ASSIGNED->value, 'courier_id' => $courier1->id]);
+        $tokenService = resolve(TokenServiceInterface::class);
+        $token = $tokenService->generateCourierToken($courier2);
+        $response = $this->withHeaders(['Authorization' => 'Bearer ' . $token])
+            ->patchJson(route('v1.parcels.at-vendor', $parcel->uuid));
+        $response->assertJsonFragment(['message' => 'The parcel is not assigned to you.']);
+        $response->assertForbidden();
+    }
+
+    /** @test */
+    public function id_cant_change_someone_else_parcel_status_to_picked(): void
+    {
+        $courier1 = Courier::factory()->create();
+        $courier2 = Courier::factory()->create();
+        $parcel = Parcel::factory()->create(['status' => ParcelStatus::AT_VENDOR->value, 'courier_id' => $courier1->id]);
+        $tokenService = resolve(TokenServiceInterface::class);
+        $token = $tokenService->generateCourierToken($courier2);
+        $response = $this->withHeaders(['Authorization' => 'Bearer ' . $token])
+            ->patchJson(route('v1.parcels.picked', $parcel->uuid));
+        $response->assertJsonFragment(['message' => 'The parcel is not assigned to you.']);
+        $response->assertForbidden();
+    }
+
+    /** @test */
+    public function id_cant_change_someone_else_parcel_status_to_delivered(): void
+    {
+        $courier1 = Courier::factory()->create();
+        $courier2 = Courier::factory()->create();
+        $parcel = Parcel::factory()->create(['status' => ParcelStatus::PICKED->value, 'courier_id' => $courier1->id]);
+        $tokenService = resolve(TokenServiceInterface::class);
+        $token = $tokenService->generateCourierToken($courier2);
+        $response = $this->withHeaders(['Authorization' => 'Bearer ' . $token])
+            ->patchJson(route('v1.parcels.delivered', $parcel->uuid));
+        $response->assertJsonFragment(['message' => 'The parcel is not assigned to you.']);
+        $response->assertForbidden();
+    }
 }

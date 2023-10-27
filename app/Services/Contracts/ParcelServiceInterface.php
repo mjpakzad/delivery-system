@@ -12,5 +12,9 @@ interface ParcelServiceInterface
     public function cancelParcel(Parcel $parcel): Parcel;
     public function pendingParcels(): LengthAwarePaginator|Collection;
     public function myParcels(): LengthAwarePaginator|Collection;
-    public function assignParcel($parcel): Parcel;
+    public function assignParcel(Parcel $parcel): Parcel;
+    public function atVendorParcel(Parcel $parcel): Parcel;
+    public function pickedParcel(Parcel $parcel): Parcel;
+    public function deliveredParcel(Parcel $parcel): Parcel;
+    public function courierLocationUpdate(Parcel $parcel, array $data): Parcel;
 }

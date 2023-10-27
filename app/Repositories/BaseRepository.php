@@ -34,7 +34,6 @@ class BaseRepository implements BaseRepositoryInterface
     public function list(array $queries = [], array $relations = []): LengthAwarePaginator|Collection
     {
         $models = $this->getModel()->query()->with($relations);
-
         return $this->applyQuery($models, $queries)->get();
     }
 
@@ -64,8 +63,15 @@ class BaseRepository implements BaseRepositoryInterface
     public
     function update(Model $model, array $parameters): Model
     {
+        if(isset($parameters['lock'])) {
+            if($parameters['forUpdate']) {
+                $model->lockForUpdate();
+            } elseif($parameters['shared']) {
+                $model->sharedLocked();
+            }
+            unset($parameters['lock']);
+        }
         $model->update($parameters);
-
         return $model->refresh();
     }
 

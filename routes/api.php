@@ -22,5 +22,9 @@ Route::prefix('v1')->name('v1.')->middleware('auth:sanctum')->group(function () 
         Route::get('pending', 'pending')->name('pending')->middleware('ability:parcels-pending');
         Route::get('my', 'my')->name('my')->middleware('ability:parcels-my');
         Route::patch('{parcel}/assign', 'assign')->name('assign')->middleware('ability:parcels-assign');
+        Route::patch('{parcel}/at-vendor', 'atVendor')->name('at-vendor')->middleware('ability:parcels-assign');
+        Route::patch('{parcel}/picked', 'picked')->name('picked')->middleware('ability:parcels-assign');
+        Route::patch('{parcel}/delivered', 'delivered')->name('delivered')->middleware('ability:parcels-assign');
+        Route::post('{parcel}/webhook', 'webhook')->name('webhook')->middleware('ability:parcels-assign');
     });
 });

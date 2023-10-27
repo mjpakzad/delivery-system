@@ -52,7 +52,7 @@ class ParcelRepository extends BaseRepository implements ParcelRepositoryInterfa
      */
     public function assignToMe(Parcel $parcel): Parcel
     {
-        return $this->update($parcel, ['courier_id' => auth()->id(), 'status' => ParcelStatus::ASSIGNED]);
+        return $this->update($parcel, ['courier_id' => auth()->id(), 'status' => ParcelStatus::ASSIGNED->value, 'locked' => 'forUpdate']);
     }
 
     /**
@@ -92,5 +92,68 @@ class ParcelRepository extends BaseRepository implements ParcelRepositoryInterfa
     public function unassigned(array $queries = [], array $relations = []): LengthAwarePaginator|Collection
     {
         return $this->getModel()->query()->unassigned()->get();
+    }
+
+    /**
+     * @param Parcel $parcel
+     * @return Parcel
+     */
+    public function arrivedToVendor(Parcel $parcel): Parcel
+    {
+        return $this->update($parcel, ['status' => ParcelStatus::AT_VENDOR->value]);
+    }
+
+    /**
+     * @param Parcel $parcel
+     * @return Parcel
+     */
+    public function picked(Parcel $parcel): Parcel
+    {
+        return $this->update($parcel, ['status' => ParcelStatus::PICKED->value, 'picked_at' => now()]);
+    }
+
+    /**
+     * @param Parcel $parcel
+     * @return Parcel
+     */
+    public function delivered(Parcel $parcel): Parcel
+    {
+        return $this->update($parcel, ['status' => ParcelStatus::DELIVERED->value, 'delivered_at' => now()]);
+    }
+
+    /**
+     * @param Parcel $parcel
+     * @return bool
+     */
+    public function isMine(Parcel $parcel): bool
+    {
+        return $parcel->courier_id === auth()->id();
+    }
+
+    /**
+     * @param Parcel $parcel
+     * @return bool
+     */
+    public function isAtVendor(Parcel $parcel): bool
+    {
+        return $parcel->status === ParcelStatus::AT_VENDOR;
+    }
+
+    /**
+     * @param Parcel $parcel
+     * @return bool
+     */
+    public function isPicked(Parcel $parcel): bool
+    {
+        return $parcel->status === ParcelStatus::PICKED;
+    }
+
+    /**
+     * @param Parcel $parcel
+     * @return bool
+     */
+    public function hasAssignedStatus(Parcel $parcel): bool
+    {
+        return $parcel->status === ParcelStatus::ASSIGNED;
     }
 }
